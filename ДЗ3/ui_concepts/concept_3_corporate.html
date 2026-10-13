@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Концепция 3 — Корпоративный · Учёт инструментов</title>
+<style>
+    :root { --side:#1e3a5f; --side2:#2b4c7a; --bg:#f3f5f8; --card:#fff; --ink:#1f2933; --mute:#64748b; --line:#d9e0e8; --blue:#1d4ed8; --ok:#0f766e; --warn:#a16207; --bad:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:14px/1.45 "Segoe UI", system-ui, sans-serif; color:var(--ink); background:var(--bg); display:grid; grid-template-columns:210px 1fr 300px; min-height:100vh; }
+    aside.nav { background:var(--side); color:#cbd5e1; padding:16px 0; }
+    aside.nav h1 { color:#fff; font-size:15px; margin:0 16px 20px; }
+    aside.nav a { display:block; padding:10px 16px; color:inherit; text-decoration:none; border-left:3px solid transparent; }
+    aside.nav a.on { background:var(--side2); color:#fff; border-color:#93c5fd; }
+    main { padding:16px 20px; min-width:0; }
+    .crumbs { color:var(--mute); margin-bottom:8px; }
+    .toolbar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+    input, select { font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:#fff; }
+    .btn { font:inherit; padding:6px 14px; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:3px; cursor:pointer; }
+    .btn.sec { background:#fff; color:var(--blue); }
+    .btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline:2px solid #f59e0b; outline-offset:1px; }
+    table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); }
+    th { background:#e8edf3; text-align:left; padding:7px 10px; font-weight:600; border-bottom:1px solid var(--line); }
+    td { padding:7px 10px; border-bottom:1px solid var(--line); }
+    tr.sel td { background:#dbeafe; }
+    .b { font-size:12px; padding:1px 8px; border-radius:2px; border:1px solid currentColor; }
+    .in_stock { color:var(--ok); } .issued { color:var(--warn); } .repair { color:var(--bad); }
+    td.late { color:var(--bad); font-weight:600; }
+    aside.detail { background:var(--card); border-left:1px solid var(--line); padding:16px; }
+    aside.detail h2 { font-size:15px; margin:0 0 4px; }
+    dl { display:grid; grid-template-columns:110px 1fr; gap:4px 8px; margin:12px 0; }
+    dt { color:var(--mute); } dd { margin:0; }
+    h3 { font-size:13px; text-transform:uppercase; color:var(--mute); margin:16px 0 6px; }
+    ul.hist { margin:0; padding-left:18px; }
+    .actions { display:flex; gap:8px; margin-top:16px; }
+    @media (max-width:1000px) { body { grid-template-columns:1fr; } aside.detail { border-left:0; border-top:1px solid var(--line); } aside.nav { display:flex; overflow-x:auto; padding:0; } aside.nav h1 { display:none; } aside.nav a { white-space:nowrap; } }
+</style>
+</head>
+<body>
+<aside class="nav" aria-label="Разделы">
+    <h1>АС «Учёт инструментов»</h1>
+    <a class="on" href="#">Инструменты</a><a href="#">Выдача и возврат</a><a href="#">Сотрудники</a><a href="#">Категории</a><a href="#">Отчёты</a>
+</aside>
+<main>
+    <div class="crumbs">Главная / Инструменты</div>
+    <div class="toolbar">
+        <input type="search" placeholder="Название, номер, производитель" aria-label="Поиск" size="28">
+        <select aria-label="Категория"><option>Все категории</option><option>Электроинструмент</option></select>
+        <select aria-label="Статус"><option>Все статусы</option></select>
+        <button class="btn">Добавить инструмент</button><button class="btn sec">Экспорт CSV</button>
+    </div>
+    <table>
+        <thead><tr><th>Инв. №</th><th>Наименование</th><th>Категория</th><th>Статус</th><th>Срок возврата</th></tr></thead>
+        <tbody>
+        <tr class="sel"><td>ИНВ-0001</td><td>Дрель ударная Bosch GSB 13 RE</td><td>Электроинструмент</td><td><span class="b issued">Выдан</span></td><td class="late">10.10.2026 (−3 дн.)</td></tr>
+        <tr><td>ИНВ-0002</td><td>Шуруповёрт Makita DF330D</td><td>Электроинструмент</td><td><span class="b in_stock">На складе</span></td><td>—</td></tr>
+        <tr><td>ИНВ-0003</td><td>Перфоратор Metabo KHE 2660</td><td>Электроинструмент</td><td><span class="b issued">Выдан</span></td><td>18.10.2026</td></tr>
+        <tr><td>ИНВ-0004</td><td>Угловая шлифмашина Hitachi G13</td><td>Электроинструмент</td><td><span class="b repair">В ремонте</span></td><td>—</td></tr>
+        </tbody>
+    </table>
+</main>
+<aside class="detail" aria-label="Карточка инструмента">
+    <h2>Дрель ударная Bosch GSB 13 RE</h2>
+    <span class="b issued">Выдан</span>
+    <dl><dt>Инв. номер</dt><dd>ИНВ-0001</dd><dt>Производитель</dt><dd>Bosch</dd><dt>Цена</dt><dd>5 200 ₽</dd><dt>Хранение</dt><dd>Склад А, стеллаж 1</dd><dt>У кого</dt><dd>Иванов П. С., Ремонтный цех</dd></dl>
+    <h3>История выдач</h3>
+    <ul class="hist"><li>03.10.2026 — выдана Иванову П. С., срок 10.10.2026</li></ul>
+    <div class="actions"><button class="btn">Принять возврат</button><button class="btn sec">Продлить срок</button></div>
+</aside>
+</body>
+</html>

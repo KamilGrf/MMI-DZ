@@ -1,0 +1,8 @@
+# dependencies, build output, logs
+node_modules/
+dist/
+*.log
+# secrets: never commit (the template .env.example stays)
+.env
+.env.*
+!.env.example

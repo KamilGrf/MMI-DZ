@@ -1,0 +1,59 @@
+--- a/src/app.js
++++ b/src/app.js
+@@ -55,6 +55,7 @@
+         add('GET', '/api/issues', (c) => this.issues.list(c.query));
+         add('POST', '/api/issues', (c) => this.service.issueTool(c.body));
+         add('POST', '/api/issues/:id/return', (c) => this.service.returnTool(c.p.id, c.body));
++        add('POST', '/api/issues/:id/extend', (c) => this.service.extendDueDate(c.p.id, c.body));
+ 
+         add('GET', '/api/stats', () => this.service.stats());
+         add('GET', '/api/report/overdue.csv', () => ({ csv: this.service.overdueCsv() }));
+@@ -94,7 +95,7 @@
+                 });
+                 res.end(result.csv);
+             } else {
+-                this.sendJson(res, req.method === 'POST' && !/\/return$/.test(url.pathname) ? 201 : 200, result);
++                this.sendJson(res, req.method === 'POST' && !/\/(return|extend)$/.test(url.pathname) ? 201 : 200, result);
+             }
+             return;
+         }
+--- a/src/services.js
++++ b/src/services.js
+@@ -56,6 +56,19 @@
+         return this.issues.get(issueId);
+     }
+ 
++    /** Продлить срок возврата выданного инструмента (use case «Продлить срок возврата»). */
++    extendDueDate(issueId, body = {}) {
++        const dueAt = date(body.due_at, 'Новый срок возврата', { required: true });
++
++        this.d.transaction(() => {
++            const issue = this.issues.get(issueId);
++            if (issue.returned_at) throw new HttpError(409, 'Инструмент уже возвращён, срок продлить нельзя');
++            if (dueAt <= issue.due_at) throw new HttpError(400, 'Новый срок возврата должен быть позже текущего');
++            this.d.run('UPDATE issues SET due_at = ? WHERE id = ?', dueAt, issueId);
++        });
++        return this.issues.get(issueId);
++    }
++
+     /** Сводная статистика для отчёта (use case «Просмотреть отчёт»). */
+     stats() {
+         const byStatus = this.d.all('SELECT status, COUNT(*) AS n FROM tools GROUP BY status');
+--- a/test/api.test.js
++++ b/test/api.test.js
+@@ -125,3 +125,15 @@
+     const days = Number(lines[1].split(';').pop());
+     assert.ok(days > 0);
+ });
++
++test('продление срока возврата', async () => {
++    const issue = await call('POST', '/api/issues', { tool_id: 8, employee_id: 2, due_at: '2099-01-01' });
++    const ok = await call('POST', `/api/issues/${issue.data.id}/extend`, { due_at: '2099-02-01' });
++    assert.equal(ok.status, 200);
++    assert.equal(ok.data.due_at, '2099-02-01');
++    assert.equal((await call('POST', `/api/issues/${issue.data.id}/extend`, { due_at: '2099-02-01' })).status, 400);
++    assert.equal((await call('POST', `/api/issues/${issue.data.id}/extend`, {})).status, 400);
++    assert.equal((await call('POST', '/api/issues/9999/extend', { due_at: '2099-03-01' })).status, 404);
++    await call('POST', `/api/issues/${issue.data.id}/return`, {});
++    assert.equal((await call('POST', `/api/issues/${issue.data.id}/extend`, { due_at: '2099-03-01' })).status, 409);
++});

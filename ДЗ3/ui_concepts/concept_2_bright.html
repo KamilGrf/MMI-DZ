@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Концепция 2 — Яркий · Учёт инструментов</title>
+<style>
+    :root { --bg:#fff7ed; --card:#fff; --ink:#1f2937; --mute:#6b7280; --brand:#f97316; --brand2:#ec4899; --ok:#16a34a; --warn:#f59e0b; --bad:#dc2626; --rep:#7c3aed; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.45 "Trebuchet MS", system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+    header { background:linear-gradient(120deg,var(--brand),var(--brand2)); color:#fff; padding:20px 20px 72px; }
+    header h1 { margin:0; font-size:22px; }
+    header p { margin:4px 0 0; opacity:.9; }
+    .container { max-width:1000px; margin:-52px auto 0; padding:0 16px 96px; }
+    .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+    .kpi { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
+    .kpi b { display:block; font-size:30px; }
+    .kpi span { color:var(--mute); font-size:14px; }
+    .kpi.bad { background:var(--bad); color:#fff; } .kpi.bad span { color:#fff; }
+    .chips { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0 16px; }
+    .chip { border:2px solid var(--brand); color:var(--brand); background:#fff; border-radius:999px; padding:6px 16px; font:inherit; cursor:pointer; font-weight:bold; }
+    .chip.on { background:var(--brand); color:#fff; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+    .tool { background:var(--card); border-radius:16px; padding:16px; border-left:8px solid var(--ok); box-shadow:0 4px 12px rgba(0,0,0,.06); }
+    .tool.issued { border-color:var(--warn); } .tool.late { border-color:var(--bad); } .tool.repair { border-color:var(--rep); }
+    .tool h3 { margin:0 0 4px; font-size:16px; }
+    .tool small { color:var(--mute); }
+    .tag { display:inline-block; margin:10px 0; padding:3px 10px; border-radius:999px; color:#fff; font-size:13px; background:var(--ok); }
+    .issued .tag { background:var(--warn); } .late .tag { background:var(--bad); } .repair .tag { background:var(--rep); }
+    .tool button { display:block; width:100%; padding:10px; border:0; border-radius:10px; background:var(--ink); color:#fff; font:inherit; font-weight:bold; cursor:pointer; }
+    .fab { position:fixed; right:20px; bottom:20px; padding:16px 24px; border:0; border-radius:999px; background:var(--brand2); color:#fff; font:inherit; font-size:17px; font-weight:bold; box-shadow:0 8px 20px rgba(236,72,153,.5); cursor:pointer; }
+    button:focus-visible { outline:3px solid #2563eb; outline-offset:2px; }
+</style>
+</head>
+<body>
+<header><h1>🛠 Учёт инструментов</h1><p>Здравствуйте, Кладовщик! Сегодня 13.10.2026</p></header>
+<div class="container">
+    <section class="kpis" aria-label="Сводка">
+        <div class="kpi"><b>14</b><span>Инструментов</span></div>
+        <div class="kpi"><b>11</b><span>На складе</span></div>
+        <div class="kpi"><b>2</b><span>Выдано</span></div>
+        <div class="kpi bad"><b>1</b><span>Просрочено</span></div>
+    </section>
+    <div class="chips" role="group" aria-label="Фильтр по статусу">
+        <button class="chip on">Все</button><button class="chip">На складе</button><button class="chip">Выдан</button><button class="chip">Просрочено</button><button class="chip">В ремонте</button>
+    </div>
+    <section class="grid" aria-label="Инструменты">
+        <article class="tool late"><h3>Дрель ударная Bosch GSB 13 RE</h3><small>ИНВ-0001</small><br><span class="tag">Просрочена · 3 дн.</span><p>Иванов П. С.</p><button>Принять возврат</button></article>
+        <article class="tool"><h3>Шуруповёрт Makita DF330D</h3><small>ИНВ-0002</small><br><span class="tag">На складе</span><p>Склад А, стеллаж 1</p><button>Выдать</button></article>
+        <article class="tool issued"><h3>Перфоратор Metabo KHE 2660</h3><small>ИНВ-0003</small><br><span class="tag">Выдан до 18.10</span><p>Сидоров О. Н.</p><button>Принять возврат</button></article>
+        <article class="tool repair"><h3>Угловая шлифмашина Hitachi G13</h3><small>ИНВ-0004</small><br><span class="tag">В ремонте</span><p>Заменить патрон</p></article>
+    </section>
+</div>
+<button class="fab">＋ Выдать инструмент</button>
+</body>
+</html>

@@ -1,0 +1,102 @@
+--- a/src/app.js
++++ b/src/app.js
+@@ -57,6 +57,7 @@
+         add('POST', '/api/issues/:id/return', (c) => this.service.returnTool(c.p.id, c.body));
+ 
+         add('GET', '/api/stats', () => this.service.stats());
++        add('GET', '/api/report/usage', (c) => this.service.usageReport(c.query));
+         add('GET', '/api/report/overdue.csv', () => ({ csv: this.service.overdueCsv() }));
+         return r;
+     }
+--- a/src/services.js
++++ b/src/services.js
+@@ -1,6 +1,8 @@
+ 'use strict';
+ // Бизнес-логика: выдача и возврат инструмента, статистика.
+-const { HttpError, text, date, id, ToolRepository, EmployeeRepository, IssueRepository } = require('./repositories');
++const {
++    HttpError, text, date, id, CategoryRepository, ToolRepository, EmployeeRepository, IssueRepository,
++} = require('./repositories');
+ 
+ function todayLocal() {
+     const d = new Date();
+@@ -76,6 +78,32 @@
+         return { counts, overdue, total_tools: total.n, total_cost: total.cost, byCategory, topEmployees };
+     }
+ 
++    /**
++     * Отчёт об использовании инструментов (use case «Просмотреть отчёт»):
++     * число выдач и суммарные дни «на руках» по каждому не списанному инструменту.
++     */
++    usageReport({ category } = {}) {
++        const params = [];
++        let where = "t.status <> 'written_off'";
++        if (category) {
++            const categoryId = id(category, 'Категория');
++            new CategoryRepository(this.d).get(categoryId);
++            where += ' AND t.category_id = ?';
++            params.push(categoryId);
++        }
++        return this.d.all(`
++            SELECT t.id AS tool_id, t.inv_number, t.name AS tool_name, c.name AS category,
++                   COUNT(i.id) AS issues_count,
++                   COALESCE(SUM(CAST(julianday(COALESCE(i.returned_at, date('now','localtime'))) - julianday(i.issued_at) AS INTEGER)), 0) AS days_in_use,
++                   MAX(i.issued_at) AS last_issued_at
++            FROM tools t
++            JOIN categories c ON c.id = t.category_id
++            LEFT JOIN issues i ON i.tool_id = t.id
++            WHERE ${where}
++            GROUP BY t.id
++            ORDER BY days_in_use DESC, t.inv_number`, ...params);
++    }
++
+     /** CSV-выгрузка просроченных возвратов (для Excel: BOM, разделитель «;»). */
+     overdueCsv() {
+         const today = Date.parse(todayLocal());
+--- a/test/api.test.js
++++ b/test/api.test.js
+@@ -125,3 +125,23 @@
+     const days = Number(lines[1].split(';').pop());
+     assert.ok(days > 0);
+ });
++
++test('отчёт об использовании: выдачи, дни, фильтр по категории и ошибки', async () => {
++    const all = await call('GET', '/api/report/usage');
++    assert.equal(all.status, 200);
++    const stats = await call('GET', '/api/stats');
++    assert.equal(all.data.length, stats.data.total_tools); // списанные в отчёт не попадают
++    const drill = all.data.find((r) => r.tool_id === 1); // выдана 10 дней назад, не возвращена
++    assert.equal(drill.issues_count, 1);
++    assert.equal(drill.days_in_use, 10);
++    assert.equal(all.data[0].tool_id, 1); // сортировка по days_in_use по убыванию
++    const unused = all.data.find((r) => r.tool_id === 14);
++    assert.equal(unused.issues_count, 0);
++    assert.equal(unused.last_issued_at, null);
++
++    const cat = await call('GET', '/api/report/usage?category=1');
++    assert.ok(cat.data.length > 0 && cat.data.every((r) => r.category === 'Электроинструмент'));
++
++    assert.equal((await call('GET', '/api/report/usage?category=abc')).status, 400);
++    assert.equal((await call('GET', '/api/report/usage?category=999')).status, 404);
++});
+--- a/public/js/views.js
++++ b/public/js/views.js
+@@ -272,6 +272,7 @@
+     async render() {
+         const s = await api.get('/api/stats');
+         const overdue = await api.get('/api/issues?overdue=1');
++        const usage = await api.get('/api/report/usage');
+         this.root.innerHTML = `
+             <div class="toolbar"><h2>Отчёт по инструментам</h2></div>
+             <div class="cards">
+@@ -289,6 +290,10 @@
+         ? `<table><thead><tr><th>Сотрудник</th><th class="num">Шт.</th></tr></thead><tbody>${s.topEmployees.map((e) => `<tr><td>${esc(e.full_name)}</td><td class="num">${e.n}</td></tr>`).join('')}</tbody></table>`
+         : '<div class="empty">Нет невозвращённых инструментов</div>'}</div>
+             </div>
++            <h3>Использование инструментов</h3>
++            <table><thead><tr><th>Инструмент</th><th>Категория</th><th class="num">Выдач</th><th class="num">Дней на руках</th><th>Последняя выдача</th></tr></thead>
++                <tbody>${usage.map((u) => `<tr><td>${esc(u.inv_number)} — ${esc(u.tool_name)}</td><td>${esc(u.category)}</td>
++                <td class="num">${u.issues_count}</td><td class="num">${u.days_in_use}</td><td>${formatDate(u.last_issued_at)}</td></tr>`).join('')}</tbody></table>
+             <h3>Просроченные возвраты</h3>
+             ${overdue.length ? `<table><thead><tr><th>Инструмент</th><th>Сотрудник</th><th>Подразделение</th><th>Вернуть до</th></tr></thead>
+                 <tbody>${overdue.map((i) => `<tr class="overdue"><td>${esc(i.inv_number)} — ${esc(i.tool_name)}</td><td>${esc(i.employee_name)}</td>

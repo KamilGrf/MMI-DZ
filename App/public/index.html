@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>АС «Учёт инструментов»</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <h1>АС «Учёт инструментов»</h1>
+        <nav id="nav" class="tabs" aria-label="Разделы системы">
+            <button data-view="tools" class="tab active">Инструменты</button>
+            <button data-view="issues" class="tab">Выдача и возврат</button>
+            <button data-view="employees" class="tab">Сотрудники</button>
+            <button data-view="categories" class="tab">Категории</button>
+            <button data-view="stats" class="tab">Отчёт</button>
+        </nav>
+    </header>
+
+    <main id="view" class="content" aria-live="polite"></main>
+
+    <dialog id="dialog" class="modal">
+        <form method="dialog" id="dialogForm" novalidate>
+            <h2 id="dialogTitle"></h2>
+            <div id="dialogBody" class="form-grid"></div>
+            <p id="dialogError" class="error" role="alert" hidden></p>
+            <div class="modal-actions">
+                <button type="button" id="dialogCancel" class="btn">Отмена</button>
+                <button type="submit" id="dialogOk" class="btn primary">Сохранить</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>
