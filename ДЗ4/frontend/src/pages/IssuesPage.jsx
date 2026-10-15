@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { issuesApi } from '../api/index.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 import { daysOverdue, formatDate } from '../utils/format.js';
 import { ReturnForm } from '../components/forms.jsx';
 import { Button, EmptyState, ErrorBanner, Spinner, TableCard } from '../components/ui.jsx';
@@ -12,6 +13,7 @@ const FILTERS = [
 ];
 
 export default function IssuesPage() {
+    const { can } = useAuth();
     const [filter, setFilter] = useState('active');
     const [returning, setReturning] = useState(null);
     const params = FILTERS.find((f) => f.key === filter).params;
@@ -58,7 +60,7 @@ export default function IssuesPage() {
                                             {late && <> (−{daysOverdue(i.due_at)} дн.)</>}
                                         </td>
                                         <td className="px-2.5 py-2 text-right">
-                                            {!i.returned_at && <Button variant="secondary" onClick={() => setReturning(i)}>Принять</Button>}
+                                            {!i.returned_at && can('issues:write') && <Button variant="secondary" onClick={() => setReturning(i)}>Принять</Button>}
                                         </td>
                                     </tr>
                                 );

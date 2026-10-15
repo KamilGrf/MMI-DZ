@@ -2,6 +2,15 @@ import { issuesApi, statsApi, OVERDUE_CSV_URL } from '../api/index.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { daysOverdue, formatDate, formatMoney } from '../utils/format.js';
 import { EmptyState, ErrorBanner, Spinner, TableCard } from '../components/ui.jsx';
+import PieChart from '../components/PieChart.jsx';
+import { STATUS_LABELS } from '../utils/format.js';
+
+// Same hues as the status badges; the legend repeats every value as text.
+const STATUS_COLORS = { in_stock: '#0f766e', issued: '#b45309', repair: '#b91c1c', written_off: '#64748b' };
+
+const pieData = (counts) => Object.keys(STATUS_LABELS).map((status) => ({
+    label: STATUS_LABELS[status], value: counts[status] ?? 0, color: STATUS_COLORS[status],
+}));
 
 function Tile({ value, label, alert }) {
     return (
@@ -44,6 +53,14 @@ function ReportBody({ stats, overdue }) {
                 <Tile value={stats.counts.issued} label="Выдано" />
                 <Tile value={stats.counts.repair} label="В ремонте" />
                 <Tile value={stats.overdue} label="Просрочено возвратов" alert={stats.overdue > 0} />
+            </section>
+
+            <section aria-label="Структура парка" className="mb-5">
+                <h3 className="mb-1 font-semibold">Структура парка по статусам</h3>
+                <div className="rounded border border-slate-300 bg-white p-4">
+                    <PieChart title="Структура парка по статусам" data={pieData(stats.counts)} />
+                </div>
+                <p className="mt-1 text-xs text-slate-500">Диаграмма учитывает и списанные инструменты</p>
             </section>
 
             <div className="mb-5 grid gap-4 md:grid-cols-2">

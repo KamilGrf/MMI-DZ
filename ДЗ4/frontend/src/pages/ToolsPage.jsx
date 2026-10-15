@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { categoriesApi, issuesApi, toolsApi } from '../api/index.js';
 import { useAsync, useDebounced } from '../hooks/useAsync.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 import { daysOverdue, formatDate, formatMoney } from '../utils/format.js';
 import { IssueForm, ReturnForm, ToolForm } from '../components/forms.jsx';
 import { Button, EmptyState, ErrorBanner, Spinner, StatusBadge, TableCard } from '../components/ui.jsx';
@@ -11,6 +12,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ToolsPage() {
+    const { can } = useAuth();
     const [q, setQ] = useState('');
     const [status, setStatus] = useState('');
     const [category, setCategory] = useState('');
@@ -51,7 +53,7 @@ export default function ToolsPage() {
                 <select aria-label="Статус" value={status} onChange={(e) => setStatus(e.target.value)} className="rounded border border-slate-300 bg-white px-2 py-1.5 text-sm">
                     {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
-                <Button onClick={() => setModal('add')} disabled={!categories.data}>Добавить инструмент</Button>
+                {can('tools:write') && <Button onClick={() => setModal('add')} disabled={!categories.data}>Добавить инструмент</Button>}
             </div>
 
             <ErrorBanner error={tools.error} onRetry={tools.reload} />
@@ -116,8 +118,11 @@ export default function ToolsPage() {
 }
 
 function ToolDetail({ tool, onIssue, onReturn, version }) {
+    const { can } = useAuth();
     // `version` changes after every list reload, so the history refreshes too.
-    const history = useAsync(() => issuesApi.list({ tool: tool.id }), [tool.id, version]);
+    // Roles without `history:read` never request the history: it names other employees.
+    const showHistory = can('history:read');
+    const history = useAsync(() => (showHistory ? issuesApi.list({ tool: tool.id }) : Promise.resolve([])), [tool.id, version, showHistory]);
     const open = (history.data || []).find((i) => !i.returned_at);
 
     return (
@@ -133,11 +138,11 @@ function ToolDetail({ tool, onIssue, onReturn, version }) {
                 {tool.note && <><dt className="text-slate-500">Примечание</dt><dd>{tool.note}</dd></>}
             </dl>
 
-            <h4 className="mb-1 mt-4 text-xs font-semibold uppercase text-slate-500">История выдач</h4>
+            {showHistory && <h4 className="mb-1 mt-4 text-xs font-semibold uppercase text-slate-500">История выдач</h4>}
             <ErrorBanner error={history.error} onRetry={history.reload} />
-            {history.loading && !history.data && <Spinner />}
-            {history.data && history.data.length === 0 && <p className="text-sm text-slate-500">Этот инструмент ещё не выдавался</p>}
-            {history.data && history.data.length > 0 && (
+            {showHistory && history.loading && !history.data && <Spinner />}
+            {showHistory && history.data && history.data.length === 0 && <p className="text-sm text-slate-500">Этот инструмент ещё не выдавался</p>}
+            {showHistory && history.data && history.data.length > 0 && (
                 <ul className="list-disc space-y-1 pl-5 text-sm">
                     {history.data.map((i) => {
                         const late = !i.returned_at && i.overdue;
@@ -152,10 +157,12 @@ function ToolDetail({ tool, onIssue, onReturn, version }) {
                 </ul>
             )}
 
-            <div className="mt-4 flex gap-2">
-                {tool.status === 'in_stock' && <Button onClick={onIssue}>Выдать</Button>}
-                {tool.status === 'issued' && open && <Button onClick={() => onReturn(open)}>Принять возврат</Button>}
-            </div>
+            {can('issues:write') && (
+                <div className="mt-4 flex gap-2">
+                    {tool.status === 'in_stock' && <Button onClick={onIssue}>Выдать</Button>}
+                    {tool.status === 'issued' && open && <Button onClick={() => onReturn(open)}>Принять возврат</Button>}
+                </div>
+            )}
         </div>
     );
 }
