@@ -6,3 +6,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# HW5 (Supabase version) lives in its own repository: github.com/KamilGrf/tool-accounting
+/ДЗ5/
